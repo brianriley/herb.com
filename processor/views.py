@@ -2,6 +2,7 @@ import csv
 
 from django.http import HttpResponse
 
+from processor import forms
 from processor import models
 
 
@@ -11,8 +12,9 @@ def upload_history(request):
     the rows.
     """
     if request.method == 'POST':
-        if 'history' in request.FILES:
-            reader = csv.reader(request.FILES['history'])
+        form = forms.UploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            reader = csv.reader(form.cleaned_data['history'])
             try:
                 header = reader.next()
             except StopIteration:
@@ -31,5 +33,5 @@ def upload_history(request):
                     description=processed_row['DESC']
                 )
         else:
-            return HttpResponse("Please upload a file")
+            return HttpResponse(form.errors)
     return HttpResponse("OK")
