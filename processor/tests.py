@@ -21,15 +21,6 @@ class ProcessorTestCase(TestCase):
         self.assertEquals("Papa Ginos", transactions[1].description)
         self.assertEquals("Paychex", transactions[2].description)
 
-    def test_that_uploading_a_blank_file_gets_ignored(self):
-        f = SimpleUploadedFile('history.csv', '')
-
-        response = self.client.post(reverse('processor'), {'history': f})
-        self.assertEquals(200, response.status_code)
-        self.assertEquals(0, Transaction.objects.count())
-
-        f.close()
-
     def test_that_files_with_a_bad_format_are_rejected(self):
         f = SimpleUploadedFile('history.csv', 'ID,DATE\n1,2012-12-12\n2,2012-12-13')
 
@@ -54,3 +45,10 @@ class UploadFormTestCase(TestCase):
         request = RequestFactory().post('/', {'history': f})
         form = UploadForm(request.POST, request.FILES)
         assert form.is_valid()
+
+    def test_that_empty_file_is_rejected(self):
+        f = SimpleUploadedFile('history.csv', '')
+
+        request = RequestFactory().post('/', {'history': f})
+        form = UploadForm(request.POST, request.FILES)
+        assert not form.is_valid()

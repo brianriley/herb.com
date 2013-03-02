@@ -15,10 +15,7 @@ def upload_history(request):
         form = forms.UploadForm(request.POST, request.FILES)
         if form.is_valid():
             reader = csv.reader(form.cleaned_data['history'])
-            try:
-                header = reader.next()
-            except StopIteration:
-                return HttpResponse("File empty. Please upload a CSV file with contents")
+            header = reader.next()
 
             required_headers = ['DATE', 'AMOUNT', 'DESC']
             for required_header in required_headers:
