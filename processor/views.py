@@ -1,5 +1,3 @@
-import csv
-
 from django.http import HttpResponse
 
 from processor import forms
@@ -14,15 +12,11 @@ def upload_history(request):
     if request.method == 'POST':
         form = forms.UploadForm(request.POST, request.FILES)
         if form.is_valid():
-            reader = csv.reader(form.cleaned_data['history'])
-            header = reader.next()
-
-            for row in reader:
-                processed_row = dict(zip(header, row))
+            for entry in form.cleaned_data['history']:
                 models.Transaction.objects.create(
-                    posted=processed_row['DATE'],
-                    amount=processed_row['AMOUNT'],
-                    description=processed_row['DESC']
+                    posted=entry['DATE'],
+                    amount=entry['AMOUNT'],
+                    description=entry['DESC']
                 )
         else:
             return HttpResponse(form.errors)
