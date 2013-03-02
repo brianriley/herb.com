@@ -17,11 +17,6 @@ def upload_history(request):
             reader = csv.reader(form.cleaned_data['history'])
             header = reader.next()
 
-            required_headers = ['DATE', 'AMOUNT', 'DESC']
-            for required_header in required_headers:
-                if not required_header in header:
-                    return HttpResponse("File not in the correct format")
-
             for row in reader:
                 processed_row = dict(zip(header, row))
                 models.Transaction.objects.create(

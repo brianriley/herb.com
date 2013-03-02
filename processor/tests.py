@@ -1,8 +1,10 @@
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
+from django import forms
 from django.test import TestCase
 from django.test.client import RequestFactory
 
+from processor.forms import CSVHistoryField
 from processor.forms import UploadForm
 from processor.models import Transaction
 
@@ -20,18 +22,6 @@ class ProcessorTestCase(TestCase):
         self.assertEquals("Amazon", transactions[0].description)
         self.assertEquals("Papa Ginos", transactions[1].description)
         self.assertEquals("Paychex", transactions[2].description)
-
-    def test_that_files_with_a_bad_format_are_rejected(self):
-        f = SimpleUploadedFile('history.csv', 'ID,DATE\n1,2012-12-12\n2,2012-12-13')
-
-        response = self.client.post(reverse('processor'), {'history': f})
-        self.assertEquals(200, response.status_code)
-        self.assertEquals(0, Transaction.objects.count())
-
-    def test_that_no_file_uploaded_does_nothing(self):
-        response = self.client.post(reverse('processor'))
-        self.assertEquals(200, response.status_code)
-        self.assertEquals(0, Transaction.objects.count())
 
 
 class UploadFormTestCase(TestCase):
@@ -52,3 +42,14 @@ class UploadFormTestCase(TestCase):
         request = RequestFactory().post('/', {'history': f})
         form = UploadForm(request.POST, request.FILES)
         assert not form.is_valid()
+
+
+class CSVHistoryFieldTestCase(TestCase):
+
+    def test_that_file_has_required_headers(self):
+        field = CSVHistoryField()
+        assert field.clean(SimpleUploadedFile('history.csv', b'ID,DATE,AMOUNT,DESC\n1,2012-12-12,-19.95,"Amazon"'))
+
+    def test_that_file_doesnt_have_required_headers(self):
+        field = CSVHistoryField()
+        self.assertRaises(forms.ValidationError, field.clean, SimpleUploadedFile('history.csv', b'123'))
