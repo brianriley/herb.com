@@ -7,6 +7,8 @@ from django.test.client import RequestFactory
 from processor.forms import CSVHistoryField
 from processor.forms import UploadForm
 from processor.models import Transaction
+from processor.uploads import MissingHeaderError
+from processor.uploads import TransactionProcessor
 
 
 class ProcessorTestCase(TestCase):
@@ -53,3 +55,25 @@ class CSVHistoryFieldTestCase(TestCase):
     def test_that_file_doesnt_have_required_headers(self):
         field = CSVHistoryField()
         self.assertRaises(forms.ValidationError, field.clean, SimpleUploadedFile('history.csv', b'123'))
+
+
+class TransactionProcessorTestCase(TestCase):
+
+    def test_that_missing_headers_throws_error(self):
+        csvfile = [
+            "ID,DATE",
+            "1,2012-12-12"
+        ]
+        transaction_processor = TransactionProcessor()
+
+        self.assertRaises(MissingHeaderError, transaction_processor.process, csvfile)
+
+    def test_that_proper_file_returns_list_of_dicts(self):
+        csvfile = [
+            "DATE,AMOUNT,DESC",
+            "2012-12-12,-19.95,Amazon.com"
+        ]
+        transaction_processor = TransactionProcessor()
+
+        results = transaction_processor.process(csvfile)
+        self.assertEquals(results, [{'DATE': '2012-12-12', 'AMOUNT': '-19.95', 'DESC': 'Amazon.com'}])
