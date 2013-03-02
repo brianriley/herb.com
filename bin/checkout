@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+reset() {
+    git checkout master --quiet
+}
+
+co() {
+    reset
+    git checkout --quiet $1
+}
+
+next() {
+    current_commit=`git log -1 --pretty='format:%H'`
+    next_commit=`git rev-list $current_commit..master --reverse | xargs | awk '{print $1}'`
+    co $next_commit
+}
+
+previous() {
+    current_commit=`git log -1 --pretty='format:%H'`
+    previous_commit=`git rev-list $current_commit | xargs | awk '{print $2}'`
+    co $previous_commit
+}
+
+case "$1" in
+    first )
+        co `git rev-list --reverse master | xargs | awk '{print $1}'`
+        git log -1 --oneline
+        ;;
+    next )
+        next
+        git log -1 --oneline
+        ;;
+    previous )
+        previous
+        git log -1 --oneline
+        ;;
+    last )
+        reset
+        ;;
+    * )
+        echo "Usage: checkout [first|last|next]"
+        ;;
+esac

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+
+current_commit=`git log -1 --pretty='format:%H'`
+previous_commit=`git rev-list $current_commit | xargs | awk '{print $2}'`
+
+git diff $previous_commit..$current_commit
